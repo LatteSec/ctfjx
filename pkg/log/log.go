@@ -48,7 +48,7 @@ func GetLevel() Level {
 }
 
 func Init(filePath string, lvl Level) error {
-	f, err := os.Create(filePath)
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
