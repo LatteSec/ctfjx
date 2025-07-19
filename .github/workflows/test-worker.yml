@@ -79,7 +79,7 @@ jobs:
 
       - name: Lint
         run: |
-          make lint
+          make lint/go
 
       - name: Security
         continue-on-error: true
