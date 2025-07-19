@@ -71,8 +71,8 @@ func Close() {
 }
 
 func log(lvl Level, msg string) {
-	ts := time.Now().UTC().Format(time.RFC3339)
 	line := fmt.Sprintf("%s [%s] %s\n", ts, levelNames[lvl], msg)
+	ts := time.Now().UTC().Format(time.RFC3339Nano)
 
 	mu.Lock()
 	defer mu.Unlock()
