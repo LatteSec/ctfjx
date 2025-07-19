@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -70,15 +72,42 @@ func Close() {
 	}
 }
 
+func traceCaller() string {
+	pc, file, line, ok := runtime.Caller(2)
+	if !ok {
+		return "???"
+	}
+	short := file
+	if i := strings.LastIndex(file, "/"); i != -1 {
+		short = file[i+1:]
+	}
+	fn := runtime.FuncForPC(pc).Name()
+	return fmt.Sprintf("trace: %s:%d (%s)", short, line, fn)
+}
+
+func traceStack() string {
+	buf := make([]byte, 4<<10)
+	n := runtime.Stack(buf, false)
+	return "stack:\n" + string(buf[:n])
+}
+
 func log(lvl Level, msg string) {
-	line := fmt.Sprintf("%s [%s] %s\n", ts, levelNames[lvl], msg)
 	ts := time.Now().UTC().Format(time.RFC3339Nano)
+
+	var lines []string
+	if level == TRACE && (lvl == ERROR || lvl == TRACE) {
+		lines = append(lines, fmt.Sprintf("%s [TRACE] %s", ts, traceCaller()))
+		lines = append(lines, fmt.Sprintf("%s [TRACE] %s", ts, traceStack()))
+	}
+
+	lines = append(lines, fmt.Sprintf("%s [%s] %s", ts, levelNames[lvl], msg))
+	full := strings.Join(lines, "\n")
 
 	mu.Lock()
 	defer mu.Unlock()
 
 	if logfile != nil {
-		_, _ = logfile.Write([]byte(line))
+		_, _ = logfile.Write([]byte(full))
 	}
 
 	if lvl < level {
@@ -87,9 +116,9 @@ func log(lvl Level, msg string) {
 
 	switch lvl {
 	case TRACE, INFO:
-		fmt.Fprint(stdout, line)
+		fmt.Fprint(stdout, full)
 	case WARN, ERROR:
-		fmt.Fprint(stderr, line)
+		fmt.Fprint(stderr, full)
 	}
 }
 
