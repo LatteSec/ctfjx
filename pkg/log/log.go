@@ -61,6 +61,15 @@ func Init(filePath string, lvl Level) error {
 	return nil
 }
 
+func Close() {
+	mu.Lock()
+	defer mu.Unlock()
+	if logfile != nil {
+		logfile.Close()
+		logfile = nil
+	}
+}
+
 func log(lvl Level, msg string) {
 	ts := time.Now().UTC().Format(time.RFC3339)
 	line := fmt.Sprintf("%s [%s] %s\n", ts, levelNames[lvl], msg)
