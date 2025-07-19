@@ -88,13 +88,22 @@ func Debug(v ...any) { log(DEBUG, fmt.Sprint(v...)) }
 func Info(v ...any)  { log(INFO, fmt.Sprint(v...)) }
 func Warn(v ...any)  { log(WARN, fmt.Sprint(v...)) }
 func Error(v ...any) { log(ERROR, fmt.Sprint(v...)) }
+func Fatal(v ...any) { log(ERROR, fmt.Sprint(v...)); os.Exit(1) }
 
 func Debugf(format string, v ...any) { log(DEBUG, fmt.Sprintf(format, v...)) }
 func Infof(format string, v ...any)  { log(INFO, fmt.Sprintf(format, v...)) }
 func Warnf(format string, v ...any)  { log(WARN, fmt.Sprintf(format, v...)) }
 func Errorf(format string, v ...any) { log(ERROR, fmt.Sprintf(format, v...)) }
+func Fatalf(format string, v ...any) {
+	log(ERROR, fmt.Sprintf(format, v...))
+	os.Exit(1)
+}
 
 func Debugln(v ...any) { log(DEBUG, fmt.Sprintln(v...)) }
 func Infoln(v ...any)  { log(INFO, fmt.Sprintln(v...)) }
 func Warnln(v ...any)  { log(WARN, fmt.Sprintln(v...)) }
 func Errorln(v ...any) { log(ERROR, fmt.Sprintln(v...)) }
+func Fatalln(v ...any) {
+	log(ERROR, fmt.Sprintln(v...))
+	os.Exit(1)
+}
