@@ -25,7 +25,7 @@ const (
 var (
 	mu      sync.Mutex
 	level   Level     = WARN
-	logfile io.Writer = nil
+	logfile *os.File  = nil
 	stdout  io.Writer = os.Stdout
 	stderr  io.Writer = os.Stderr
 
