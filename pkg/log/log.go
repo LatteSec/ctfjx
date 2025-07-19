@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -50,7 +51,7 @@ func GetLevel() Level {
 }
 
 func Init(filePath string, lvl Level) error {
-	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(filepath.Clean(filePath), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
