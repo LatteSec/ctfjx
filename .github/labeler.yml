@@ -1,0 +1,14 @@
+# This file is for the labeler workflow
+# Documentation https://github.com/marketplace/actions/labeler
+
+kind/docs:
+  - changed-files:
+      - any-glob-to-any-file: [www/**, "./*.{md,mdx}"]
+
+kind/test:
+  - changed-files:
+      - any-glob-to-any-file: [./*test*]
+
+kind/ci:
+  - changed-files:
+      - any-glob-to-any-file: [.github/workflows/**]
