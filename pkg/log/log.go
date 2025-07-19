@@ -68,7 +68,9 @@ func Close() {
 	mu.Lock()
 	defer mu.Unlock()
 	if logfile != nil {
-		logfile.Close()
+		if err := logfile.Close(); err != nil {
+			Errorf("failed to close log file: %v", err)
+		}
 		logfile = nil
 	}
 }
