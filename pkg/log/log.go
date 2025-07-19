@@ -16,6 +16,7 @@ type Level int
 // Arranged from most to least verbose
 const (
 	TRACE Level = iota
+	DEBUG
 	INFO
 	WARN
 	ERROR
@@ -29,12 +30,12 @@ var (
 	stdout  io.Writer = os.Stdout
 	stderr  io.Writer = os.Stderr
 
-	levelNames = [5]string{"TRACE", "INFO", "WARN", "ERROR", "QUIET"}
+	levelNames = [6]string{"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "QUIET"}
 )
 
 func SetLevel(l Level) error {
 	switch l {
-	case TRACE, INFO, WARN, ERROR, QUIET:
+	case TRACE, DEBUG, INFO, WARN, ERROR, QUIET:
 		level = l
 		Debugf("set log level to %d\n", l)
 		return nil
@@ -83,17 +84,17 @@ func log(lvl Level, msg string) {
 	}
 }
 
-func Debug(v ...any) { log(TRACE, fmt.Sprint(v...)) }
+func Debug(v ...any) { log(DEBUG, fmt.Sprint(v...)) }
 func Info(v ...any)  { log(INFO, fmt.Sprint(v...)) }
 func Warn(v ...any)  { log(WARN, fmt.Sprint(v...)) }
 func Error(v ...any) { log(ERROR, fmt.Sprint(v...)) }
 
-func Debugf(format string, v ...any) { log(TRACE, fmt.Sprintf(format, v...)) }
+func Debugf(format string, v ...any) { log(DEBUG, fmt.Sprintf(format, v...)) }
 func Infof(format string, v ...any)  { log(INFO, fmt.Sprintf(format, v...)) }
 func Warnf(format string, v ...any)  { log(WARN, fmt.Sprintf(format, v...)) }
 func Errorf(format string, v ...any) { log(ERROR, fmt.Sprintf(format, v...)) }
 
-func Debugln(v ...any) { log(TRACE, fmt.Sprintln(v...)) }
+func Debugln(v ...any) { log(DEBUG, fmt.Sprintln(v...)) }
 func Infoln(v ...any)  { log(INFO, fmt.Sprintln(v...)) }
 func Warnln(v ...any)  { log(WARN, fmt.Sprintln(v...)) }
 func Errorln(v ...any) { log(ERROR, fmt.Sprintln(v...)) }
