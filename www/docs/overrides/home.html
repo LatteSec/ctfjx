@@ -1,0 +1,218 @@
+{% extends 'main.html' %} {% block tabs %} {{ super() }}
+
+<style>
+  :root {
+    --ctfjx-primary-color: #eab676;
+  }
+
+  .lcp-img {
+    height: 10rem;
+  }
+
+  .my-2 {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .mb-16 {
+    margin-bottom: 4rem;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 12px 36px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--ctfjx-primary-color);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0px 8px 20px rgba(0, 123, 40, 0.3);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--ctfjx-primary-color);
+    border-color: var(--ctfjx-primary-color);
+    box-shadow: 0px 12px 25px rgba(0, 123, 40, 0.4);
+    transform: translateY(-3px);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0px 5px 15px rgba(0, 123, 40, 0.2);
+  }
+
+  .features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    width: 40%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .feature {
+    flex: 1 1 300px;
+    flex-direction: column;
+    max-width: 400px;
+    text-align: left;
+    padding: 0.5rem;
+  }
+
+  .feature-header {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+    width: max-content;
+  }
+
+  .feature h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #000;
+    width: max-content;
+  }
+
+  [data-md-color-scheme="slate"] .feature h3 {
+    color: #fff;
+  }
+
+  .feature p {
+    text-wrap: balance;
+  }
+
+  .feature-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+    fill: #000;
+  }
+
+  [data-md-color-scheme="slate"] .feature-icon {
+    fill: #fff;
+  }
+
+  section {
+    margin-bottom: 4rem;
+    text-align: center;
+  }
+
+  p {
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #000;
+  }
+
+  h2 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #000;
+  }
+
+  [data-md-color-scheme="slate"] h1,
+  h2 {
+    color: #fff;
+  }
+
+  @media (max-width: 639px) {
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<section style="padding-top:3rem;">
+  <img
+    src="/static/logo.png"
+    alt="ctfjx logo"
+    class="lcp-img my-2"
+    loading="eager"
+  />
+
+  <h1 style="margin:0; margin-bottom:1.5rem;">CTFjx</h1>
+
+  <h2 class="mb-16">
+    Your preferred CTF platform.
+  </h2>
+
+  <a href="/introduction" class="btn-primary">Get Started</a>
+</section>
+
+<section>
+  <h1>Fast. Secure. Self-Hosted.</h1>
+  <h2 style="margin-bottom: 2rem;">
+    CTFjx is a <b>Linux-first</b> CTF platform.
+  </h2>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-header">
+        <div class="feature-icon">
+          {% include ".icons/material/lock.svg" %}
+        </div>
+        <h3>Security First</h3>
+      </div>
+
+      <p>CTFjx is developed with security first in mind.</p>
+    </div>
+
+    <div class="feature">
+      <div class="feature-header">
+        <div class="feature-icon">
+          {% include ".icons/material/lightning-bolt.svg" %}
+        </div>
+        <h3>Lightning Fast</h3>
+      </div>
+
+      <p>
+        CTFjx is written in Go and is designed to be performant and lightweight.
+      </p>
+    </div>
+
+    <div class="feature">
+      <div class="feature-header">
+        <div class="feature-icon">
+          {% include ".icons/material/server.svg" %}
+        </div>
+        <h3>Fully Self-Hosted</h3>
+      </div>
+
+      <p>CTFjx is designed to be self-hostable.</p>
+    </div>
+
+    <div class="feature">
+      <div class="feature-header">
+        <div class="feature-icon">
+          {% include ".icons/octicons/repo-template-24.svg" %}
+        </div>
+        <h3>Open Source</h3>
+      </div>
+
+      <p>
+        CTFjx is an OSS project! No EULAs, telemetry
+      </p>
+    </div>
+  </div>
+</section>
+
+<!--
+  Future trusted by section
+
+<section>
+  <h1>Trusted by</h1>
+</section>
+-->
+{% endblock %} {% block content %} {% endblock %}
