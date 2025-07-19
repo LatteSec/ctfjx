@@ -99,8 +99,10 @@ func log(lvl Level, msg string) {
 
 	var lines []string
 	if level == TRACE && (lvl == ERROR || lvl == TRACE) {
-		lines = append(lines, fmt.Sprintf("%s [TRACE] %s", ts, traceCaller()))
-		lines = append(lines, fmt.Sprintf("%s [TRACE] %s", ts, traceStack()))
+		lines = append(lines,
+			fmt.Sprintf("%s [TRACE] %s", ts, traceCaller()),
+			fmt.Sprintf("%s [TRACE] %s", ts, traceStack()),
+		)
 	}
 
 	lines = append(lines, fmt.Sprintf("%s [%s] %s", ts, levelNames[lvl], msg))
