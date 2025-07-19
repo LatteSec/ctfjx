@@ -99,7 +99,7 @@ test:
 	go mod tidy
 	go mod verify
 	go vet ./...
-	go test -v -race ./..
+	go test -v -race ./...
 
 
 
