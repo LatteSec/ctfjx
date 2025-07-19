@@ -112,7 +112,7 @@ func log(lvl Level, msg string) {
 	defer mu.Unlock()
 
 	if logfile != nil {
-		_, _ = logfile.Write([]byte(full))
+		_, _ = logfile.WriteString(full)
 	}
 
 	if lvl < level {
