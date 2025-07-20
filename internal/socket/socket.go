@@ -79,7 +79,7 @@ func UnmarshalHeader(buf []byte) (Header, error) {
 	return h, err
 }
 
-type HandlerFunc func(c *Conn, header Header, r io.Reader) error
+type HandlerFunc func(c *Conn, header Header, r io.Reader)
 
 type Conn struct {
 	Config *ConnConfig
