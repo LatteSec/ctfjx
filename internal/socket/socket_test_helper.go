@@ -54,6 +54,7 @@ func startMockServer(t *testing.T, useTLS bool, handler func(net.Conn)) (addr st
 		assert.NoError(t, err, "failed to create x509 key pair")
 
 		ln = tls.NewListener(ln, &tls.Config{
+			MinVersion:   tls.VersionTLS13,
 			Certificates: []tls.Certificate{certPair},
 		})
 		t.Logf("upgraded to tls at %s\n", ln.Addr().String())
