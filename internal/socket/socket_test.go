@@ -40,8 +40,7 @@ func TestConn_PingPong(t *testing.T) {
 		cfg.HeartbeatInterval = time.Second
 
 		server := NewConnWithRaw(c, cfg)
-		err := server.Listen()
-		assert.NoError(t, err)
+		server.Listen()
 	})
 	defer stop()
 

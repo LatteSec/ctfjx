@@ -174,10 +174,10 @@ func (c *Conn) Register(action Action, fn HandlerFunc) {
 	c.Config.Handlers[action] = fn
 }
 
-func (c *Conn) Listen() error {
+func (c *Conn) Listen() {
 	c.muConn.Lock()
 	if c.state == ConnStateOpen {
-		return nil
+		return
 	}
 	c.state = ConnStateOpen
 	c.pongCh = make(chan struct{}, 1)
@@ -185,7 +185,7 @@ func (c *Conn) Listen() error {
 
 	c.muConn.Unlock()
 
-	return c.readLoop()
+	c.readLoop()
 }
 
 func (c *Conn) Connect() error {
@@ -337,7 +337,7 @@ func (c *Conn) ReconnectOrClose() error {
 	return errors.Join(c.Close(), err)
 }
 
-func (c *Conn) readLoop() error {
+func (c *Conn) readLoop() {
 	c.muConn.Lock()
 	c.ReadDone = make(chan struct{})
 	c.muConn.Unlock()
@@ -347,14 +347,17 @@ func (c *Conn) readLoop() error {
 	for {
 		if c.state != ConnStateOpen {
 			log.Debugln(c.Logf("connection not open, exiting read loop"))
-			return nil
+			return
 		}
 
 		headerBuf := make([]byte, 9)
 		if _, err := io.ReadFull(c.raw, headerBuf); err != nil {
 			if errors.Is(err, io.EOF) {
 				log.Infoln(c.Logf("connection closed by peer"))
-				return c.Close()
+				if err := c.Close(); err != nil {
+					log.Errorln(c.Logf("failed to close connection: %v", err))
+				}
+				return
 			}
 
 			log.Errorln(c.Logf("failed to read header: %v", err))
@@ -377,8 +380,10 @@ func (c *Conn) readLoop() error {
 
 		if header.Len > uint64(c.Config.MaxMessageSize) {
 			log.Errorln(c.Logf("payload too large, killing connection: %d > %d", header.Len, c.Config.MaxMessageSize))
-			c.Close()
-			return ErrPayloadTooLarge
+			if err := c.Close(); err != nil {
+				log.Errorln(c.Logf("failed to close connection: %v", errors.Join(ErrPayloadTooLarge, err)))
+			}
+			return
 		}
 
 		payload := make([]byte, header.Len)
