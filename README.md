@@ -5,7 +5,7 @@
 <!-- Project Banner -->
 
 <a href="https://github.com/LatteSec/ctfjx">
-  <img src="https://github.com/LatteSec/ctfjx/blob/main/www/static/logo.svg" width="300" height="300" alt="">
+  <img src="https://github.com/LatteSec/ctfjx/blob/main/www/docs/static/logo.png" width="300" height="300" alt="">
 </a>
 
 <br>
