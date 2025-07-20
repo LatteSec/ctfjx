@@ -36,30 +36,34 @@ var (
 	levelNames = [6]string{"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "QUIET"}
 )
 
-func SetLevel(l Level) error {
-	switch l {
-	case TRACE, DEBUG, INFO, WARN, ERROR, QUIET:
-		level = l
-		Debugf("set log level to %d\n", l)
-		return nil
-	}
-	return fmt.Errorf("invalid log level: %d", l)
-}
-
 func GetLevel() Level {
 	return level
 }
 
 func Init(filePath string, lvl Level) error {
-	f, err := os.OpenFile(filepath.Clean(filePath), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
-	if err != nil {
-		return err
+	switch lvl {
+	case TRACE, DEBUG, INFO, WARN, ERROR, QUIET:
+		level = lvl
+		Debugf("set log level to %d\n", lvl)
+	default:
+		return fmt.Errorf("invalid log level: %d", lvl)
+	}
+
+	filePath = filepath.Clean(filePath)
+
+	var file *os.File
+	if filePath != "" && filePath != "." {
+		f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			return err
+		}
+		file = f
 	}
 
 	mu.Lock()
 	defer mu.Unlock()
 
-	logfile = f
+	logfile = file
 	level = lvl
 	return nil
 }
