@@ -137,9 +137,17 @@ func (c *Conn) Write(b []byte) (int, error) {
 	if c.state != ConnStateOpen {
 		return 0, ErrConnectionNotEstablished
 	}
-	c.raw.SetWriteDeadline(time.Now().UTC().Add(c.Config.MessageSendTimeout))
+
+	if err := c.raw.SetWriteDeadline(time.Now().UTC().Add(c.Config.MessageSendTimeout)); err != nil {
+		return 0, err
+	}
+
 	i, err := c.raw.Write(b)
-	c.raw.SetWriteDeadline(time.Time{})
+
+	if err := c.raw.SetWriteDeadline(time.Time{}); err != nil {
+		return 0, err
+	}
+
 	return i, err
 }
 

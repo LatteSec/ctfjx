@@ -72,7 +72,7 @@ func TestConn_PingPong(t *testing.T) {
 func TestConn_TLSWrap_Fail(t *testing.T) {
 	addr, stop := startMockServer(t, false, func(c net.Conn) {
 		defer c.Close()
-		c.Write([]byte("not tls"))
+		_, _ = c.Write([]byte("not tls"))
 	})
 	defer stop()
 

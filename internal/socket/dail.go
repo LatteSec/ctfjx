@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"time"
@@ -23,7 +24,9 @@ func DailWithRetry(cfg *ConnConfig) (*Conn, error) {
 			tlsConn, err := WrapTLS(conn, cfg.TLSConfig)
 			if err != nil {
 				lastErr = err
-				conn.Close()
+				if err := conn.Close(); err != nil {
+					lastErr = errors.Join(lastErr, err)
+				}
 				log.Warnf("failed to handshake with %s: %v\n", cfg.Address, err)
 				time.Sleep(cfg.ReconnectionDelay)
 				continue
