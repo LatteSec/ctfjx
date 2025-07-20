@@ -124,7 +124,7 @@ func log(lvl Level, msg string) {
 	}
 
 	switch lvl {
-	case TRACE, INFO:
+	case TRACE, DEBUG, INFO:
 		fmt.Fprint(stdout, full)
 	case WARN, ERROR:
 		fmt.Fprint(stderr, full)
