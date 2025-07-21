@@ -1,6 +1,7 @@
 package log
 
 import (
+	"os"
 	"sync"
 	"sync/atomic"
 )
@@ -55,3 +56,14 @@ type Logger struct {
 	closeCh   chan struct{}   // closes the log writer.
 }
 
+func NewLogger(name string) *Logger {
+	return &Logger{
+		level:       WARN,
+		maxFileSize: 10 << 20, // 10MB
+		closeCh:     nil,
+		stdout:      os.Stdout,
+		stderr:      os.Stderr,
+		logCh:       make(chan LogMessage, 1<<20),
+		logfileCh:   make(chan LogMessage, 1<<20),
+	}
+}
