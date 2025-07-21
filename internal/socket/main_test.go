@@ -8,7 +8,11 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	if err := log.Init("", log.TRACE); err != nil {
+	logger := log.NewLogger("test")
+	_ = logger.SetLevel(log.TRACE)
+	log.DefaultLogger.Store(logger)
+
+	if err := logger.Start(); err != nil {
 		panic(err)
 	}
 	os.Exit(m.Run())

@@ -1,14 +1,10 @@
 package log
 
 import (
+	"errors"
 	"fmt"
-	"io"
 	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
-	"sync"
-	"time"
+	"sync/atomic"
 )
 
 // Log Level
@@ -27,108 +23,32 @@ const (
 )
 
 var (
-	mu      sync.Mutex
-	level   Level     = WARN
-	logfile *os.File  = nil
-	stdout  io.Writer = os.Stdout
-	stderr  io.Writer = os.Stderr
-
 	levelNames = [6]string{"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "QUIET"}
+
+	DefaultLogger atomic.Pointer[Logger]
+
+	ErrAlreadyStarted            = errors.New("already started")
+	ErrInvalidLogLevel           = errors.New("invalid log level")
+	ErrMissingLogFilename        = errors.New("missing log filename")
+	ErrNoLogFileConfigured       = errors.New("no log file configured")
+	ErrFoundDirWhenExpectingFile = errors.New("found directory when expecting file")
 )
 
-func GetLevel() Level {
-	return level
+func init() {
+	DefaultLogger.Store(NewLogger("default"))
 }
 
-func Init(filePath string, lvl Level) error {
-	switch lvl {
-	case TRACE, DEBUG, INFO, WARN, ERROR, QUIET:
-		level = lvl
-		Debugf("set log level to %d\n", lvl)
-	default:
-		return fmt.Errorf("invalid log level: %d", lvl)
-	}
-
-	filePath = filepath.Clean(filePath)
-
-	var file *os.File
-	if filePath != "" && filePath != "." {
-		f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
-		if err != nil {
-			return err
-		}
-		file = f
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	logfile = file
-	level = lvl
-	return nil
-}
-
-func Close() {
-	mu.Lock()
-	defer mu.Unlock()
-	if logfile != nil {
-		if err := logfile.Close(); err != nil {
-			Errorf("failed to close log file: %v", err)
-		}
-		logfile = nil
-	}
-}
-
-func traceCaller() string {
-	pc, file, line, ok := runtime.Caller(2)
-	if !ok {
-		return "???"
-	}
-	short := file
-	if i := strings.LastIndex(file, "/"); i != -1 {
-		short = file[i+1:]
-	}
-	fn := runtime.FuncForPC(pc).Name()
-	return fmt.Sprintf("trace: %s:%d (%s)", short, line, fn)
-}
-
-func traceStack() string {
-	buf := make([]byte, 4<<10)
-	n := runtime.Stack(buf, false)
-	return "stack:\n" + string(buf[:n])
-}
-
-func log(lvl Level, msg string) {
-	ts := time.Now().UTC().Format(time.RFC3339Nano)
-
-	var lines []string
-	if level == TRACE && (lvl == ERROR || lvl == TRACE) {
-		lines = append(lines,
-			fmt.Sprintf("%s [TRACE] %s", ts, traceCaller()),
-			fmt.Sprintf("%s [TRACE] %s", ts, traceStack()),
-		)
-	}
-
-	lines = append(lines, fmt.Sprintf("%s [%s] %s", ts, levelNames[lvl], msg))
-	full := strings.Join(lines, "\n")
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	if logfile != nil {
-		_, _ = logfile.WriteString(full)
-	}
-
-	if lvl < level {
+func Log(msg *LogMessage) {
+	logger := DefaultLogger.Load()
+	if logger == nil {
 		return
 	}
 
-	switch lvl {
-	case TRACE, DEBUG, INFO:
-		fmt.Fprint(stdout, full)
-	case WARN, ERROR:
-		fmt.Fprint(stderr, full)
-	}
+	logger.Log(msg)
+}
+
+func log(level Level, msg string) {
+	Log(NewLogMessage(level, msg))
 }
 
 func Debug(v ...any) { log(DEBUG, fmt.Sprint(v...)) }
