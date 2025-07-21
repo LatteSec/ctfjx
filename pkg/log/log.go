@@ -8,12 +8,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/lattesec/ctfjx/internal/helpers/debughelper"
 	"github.com/lattesec/ctfjx/internal/helpers/nopanic"
 )
 
@@ -273,22 +273,6 @@ func openLogFile(path string) (*os.File, error) {
 	return os.OpenFile(filepath.Clean(path), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
 }
 
-func traceCaller() string {
-	pc, file, line, ok := runtime.Caller(3)
-	if !ok {
-		return "???"
-	}
-	short := filepath.Base(file)
-	fn := runtime.FuncForPC(pc).Name()
-	return fmt.Sprintf("trace: %s:%d (%s)", short, line, fn)
-}
-
-func traceStack() string {
-	buf := make([]byte, 4<<10)
-	n := runtime.Stack(buf, false)
-	return "stack:\n" + string(buf[:n])
-}
-
 func log(lvl Level, msg string) {
 	mu.RLock()
 	if lvl < logLevel {
@@ -300,8 +284,8 @@ func log(lvl Level, msg string) {
 
 	if logLevel == TRACE && (lvl == TRACE || lvl == ERROR) {
 		lines = append(lines,
-			fmt.Sprintf("%s [TRACE] %s", ts, traceCaller()),
-			fmt.Sprintf("%s [TRACE] %s", ts, traceStack()),
+			fmt.Sprintf("%s [TRACE] %s", ts, debughelper.TraceCaller()),
+			fmt.Sprintf("%s [TRACE] %s", ts, debughelper.TraceStack()),
 		)
 	}
 
