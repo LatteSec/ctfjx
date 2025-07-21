@@ -78,12 +78,14 @@ func Init(dir, filename string, lvl Level) error {
 	closeCh = make(chan struct{})
 
 	logFileDir = filepath.Clean(dir)
-	logFilename = strings.TrimSuffix(filepath.Base(filename), ".log")
+	logFilename = filepath.Clean(strings.TrimSuffix(filepath.Base(filename), ".log"))
 
 	if logFileDir != "." && logFilename == "." {
 		return ErrMissingLogFilename
 	}
-	logFilename += ".log"
+	if logFilename != "." {
+		logFilename += ".log"
+	}
 	mu.Unlock()
 
 	if logFilename != "." {
