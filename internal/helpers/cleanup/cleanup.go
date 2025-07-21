@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/lattesec/ctfjx/internal/helpers/nopanic"
-	"github.com/lattesec/ctfjx/pkg/log"
 )
 
 type CleanupFunc func() error
@@ -70,7 +69,7 @@ func RunErrorCleanup() {
 	for i, fn := range fns {
 		name := fmt.Sprintf("error cleanup %d", i)
 		if err := nopanic.NoPanicRun(name, fn); err != nil {
-			log.Errorf("%s failed: %v", name, err)
+			fmt.Fprintf(os.Stderr, "%s failed: %v\n", name, err)
 		}
 	}
 }
@@ -87,7 +86,7 @@ func RunCleanup() {
 	for i, fn := range fns {
 		name := fmt.Sprintf("cleanup %d", i)
 		if err := nopanic.NoPanicRun(name, fn); err != nil {
-			log.Errorf("%s failed: %v", name, err)
+			fmt.Fprintf(os.Stderr, "%s failed: %v\n", name, err)
 		}
 	}
 }
