@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/lattesec/ctfjx/internal/helpers/debughelper"
@@ -39,7 +40,7 @@ func (lm *LogMessage) WithMetaf(key, format string, v ...any) *LogMessage {
 	return lm
 }
 
-func (lm *LogMessage) WithTraceStack(trace string) *LogMessage {
+func (lm *LogMessage) WithTraceStack() *LogMessage {
 	lm.trace = debughelper.TraceStack()
 	return lm
 }
@@ -50,9 +51,26 @@ func (lm *LogMessage) WithCaller() *LogMessage {
 }
 
 func (lm *LogMessage) String() string {
-	return fmt.Sprintf("%s %s %s",
+	var metaStr string
+	if len(lm.Meta) > 0 {
+		meta := make([]string, 0, len(lm.Meta))
+		for k, v := range lm.Meta {
+			meta = append(meta, fmt.Sprintf("%s=%s", k, v))
+		}
+		metaStr = fmt.Sprintf("{%s}", strings.Join(meta, ", "))
+	}
+
+	var debugStr string
+	if lm.trace != "" || lm.caller != "" {
+		debugStr = fmt.Sprintf("\n==== DEBUG ====\nCaller: %s\nTrace: %s", lm.caller, lm.trace) + "===== END =====\n"
+	}
+
+	return fmt.Sprintf("%s [%s] %s %s %s%s",
 		lm.Timestamp.Format(time.RFC3339Nano),
+		levelNames[lm.Level],
+		metaStr,
 		lm.Msg,
 		lm.Meta,
+		debugStr,
 	)
 }
