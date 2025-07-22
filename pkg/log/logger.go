@@ -154,7 +154,7 @@ func (l *Logger) Log(msg *LogMessage) {
 	name := l.name
 	l.mu.RUnlock()
 
-	logLine := msg.String()
+	logLine := msg.String(name)
 	if msg.Level >= WARN {
 		logLine = "1" + logLine
 	} else {
