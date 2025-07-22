@@ -34,14 +34,17 @@ var (
 	ErrFoundDirWhenExpectingFile = errors.New("found directory when expecting file")
 )
 
-func init() {
-	DefaultLogger.Store(NewLogger("default"))
-}
-
 func Log(msg *LogMessage) {
 	logger := DefaultLogger.Load()
 	if logger == nil {
-		return
+		newLogger := NewLogger("default")
+		if err := newLogger.Start(); err != nil {
+			panic(fmt.Errorf("could not start default logger: %v", err))
+		}
+
+		DefaultLogger.Store(newLogger)
+		logger = newLogger
+		logger.Log(NewLogMessage(INFO, "default logger started"))
 	}
 
 	logger.Log(msg)
