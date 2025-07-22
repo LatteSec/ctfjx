@@ -50,27 +50,27 @@ func (lm *LogMessage) WithCaller() *LogMessage {
 	return lm
 }
 
-func (lm *LogMessage) String() string {
+func (lm *LogMessage) String(loggerName string) string {
 	var metaStr string
 	if len(lm.Meta) > 0 {
 		meta := make([]string, 0, len(lm.Meta))
 		for k, v := range lm.Meta {
 			meta = append(meta, fmt.Sprintf("%s=%s", k, v))
 		}
-		metaStr = fmt.Sprintf("{%s}", strings.Join(meta, ", "))
+		metaStr = fmt.Sprintf(" {%s}", strings.Join(meta, ", "))
 	}
 
 	var debugStr string
 	if lm.trace != "" || lm.caller != "" {
-		debugStr = fmt.Sprintf("\n==== DEBUG ====\nCaller: %s\nTrace: %s", lm.caller, lm.trace) + "===== END =====\n"
+		debugStr = fmt.Sprintf("\n==== DEBUG ====\nCaller: %s\nTrace: %s", lm.caller, lm.trace) + "===== END =====\n\n"
 	}
 
-	return fmt.Sprintf("%s [%s] %s %s %s%s",
+	return strings.TrimSuffix(fmt.Sprintf("%s [%s] %s: %s%s%s",
 		lm.Timestamp.Format(time.RFC3339Nano),
 		levelNames[lm.Level],
+		loggerName,
+		strings.TrimSuffix(lm.Msg, "\n"),
 		metaStr,
-		lm.Msg,
-		lm.Meta,
 		debugStr,
-	)
+	), "\n") + "\n"
 }
