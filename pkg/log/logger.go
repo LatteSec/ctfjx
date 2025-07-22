@@ -67,6 +67,7 @@ type Logger struct {
 func NewLogger(name string) *Logger {
 	return &Logger{
 		level:       WARN,
+		name:        name,
 		maxFileSize: 10 << 20, // 10MB
 		closeCh:     nil,
 		stdout:      os.Stdout,
@@ -150,6 +151,7 @@ func (l *Logger) Log(msg *LogMessage) {
 	}
 
 	shouldWriteToIO := l.level < QUIET
+	name := l.name
 	l.mu.RUnlock()
 
 	logLine := msg.String()
