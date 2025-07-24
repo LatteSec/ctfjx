@@ -4,13 +4,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/lattesec/ctfjx/pkg/log"
+	"github.com/lattesec/log"
 )
 
 func TestMain(m *testing.M) {
-	logger := log.NewLogger("test")
-	_ = logger.SetLevel(log.TRACE)
-	log.DefaultLogger.Store(logger)
+	logger, _ := log.NewLogger().Name("test").WithLevel(log.DEBUG).Build()
+	log.Register(logger)
 
 	if err := logger.Start(); err != nil {
 		panic(err)

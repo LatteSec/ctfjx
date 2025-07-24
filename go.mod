@@ -2,7 +2,10 @@ module github.com/lattesec/ctfjx
 
 go 1.24.5
 
-require github.com/stretchr/testify v1.10.0
+require (
+	github.com/lattesec/log v0.2.1
+	github.com/stretchr/testify v1.10.0
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
