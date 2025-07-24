@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lattesec/ctfjx/pkg/log"
+	"github.com/lattesec/log"
 )
 
 type ConnState uint8
@@ -83,6 +83,7 @@ type HandlerFunc func(c *Conn, header Header, r io.Reader)
 
 type Conn struct {
 	Config *ConnConfig
+	logger *log.Logger
 
 	raw      net.Conn
 	state    ConnState
@@ -109,6 +110,13 @@ func NewConnWithRaw(raw net.Conn, cfg *ConnConfig) *Conn {
 	}
 }
 
+// Otherwise uses the default logger
+func (c *Conn) RegisterLogger(l *log.Logger) {
+	c.muConn.Lock()
+	defer c.muConn.Unlock()
+	c.logger = l
+}
+
 func (c *Conn) String() string {
 	c.muConn.RLock()
 	defer c.muConn.RUnlock()
@@ -121,14 +129,26 @@ func (c *Conn) unsafeString() string {
 	)
 }
 
-func (c *Conn) unsafeLogf(format string, v ...any) string {
-	return fmt.Sprintf("%s %s", c.unsafeString(), fmt.Sprintf(format, v...))
+func (c *Conn) unsafeGenLogMsg() *log.LogMessage {
+	var m *log.LogMessage
+	if c.logger != nil {
+		m = c.logger.Warn()
+	} else {
+		m = log.DefaultLogger().Warn()
+	}
+
+	return m.
+		WithMeta("conn", c.Config.Name).
+		WithMeta("peer", c.Config.Address).
+		WithMeta("state", c.state.String()).
+		WithMeta("tls", c.Config.UseTLS).
+		WithMeta("lastPing", c.lastPing.String())
 }
 
-func (c *Conn) Logf(format string, v ...any) string {
+func (c *Conn) GenLogMsg() *log.LogMessage {
 	c.muConn.RLock()
 	defer c.muConn.RUnlock()
-	return c.unsafeLogf(format, v...)
+	return c.unsafeGenLogMsg()
 }
 
 func (c *Conn) Write(b []byte) (int, error) {
@@ -209,23 +229,23 @@ func (c *Conn) connect() error {
 		return nil
 	}
 
-	log.Debugln(c.unsafeLogf("connecting to %s", c.Config.Address))
+	c.unsafeGenLogMsg().Info().Msg("connecting").Send()
 
 	conn, err := net.Dial("tcp", c.Config.Address)
 	if err != nil {
-		log.Debugln(c.unsafeLogf("dial %s failed: %v", c.Config.Address, err))
+		c.unsafeGenLogMsg().Error().Msgf("dial failed: %v", err).Send()
 		return errors.Join(ErrConnectionNotEstablished, fmt.Errorf("dial failed: %w", err))
 	}
 
 	if c.Config.UseTLS {
 		conn, err = WrapTLS(conn, c.Config.TLSConfig)
 		if err != nil {
-			log.Debugln(c.unsafeLogf("tls wrap failed: %v", err))
+			c.unsafeGenLogMsg().Error().Msgf("tls wrap failed: %v", err).Send()
 			return errors.Join(ErrConnectionTLSUpgradeFailed, fmt.Errorf("tls wrap failed: %w", err))
 		}
 	}
 
-	log.Debugln(c.unsafeLogf("connected"))
+	c.unsafeGenLogMsg().Info().Msg("connected").Send()
 
 	c.raw = conn
 	c.state = ConnStateOpen
@@ -246,12 +266,12 @@ func (c *Conn) Close() error {
 	c.muSend.Lock()
 	defer c.muSend.Unlock()
 
-	log.Debugln(c.unsafeLogf("closing connection"))
+	c.unsafeGenLogMsg().Info().Msg("closing").Send()
 
 	err := c.raw.Close()
 	if err != nil {
 		c.state = ConnStateUnknown
-		log.Errorln(c.unsafeLogf("failed to close connection: %v", err))
+		c.unsafeGenLogMsg().Error().Msgf("failed to close connection: %v", err).Send()
 		return err
 	}
 
@@ -285,7 +305,7 @@ func (c *Conn) reconnect() error {
 	}
 	c.state = ConnStateReconnecting
 
-	log.Debugln(c.unsafeLogf("reconnecting"))
+	c.unsafeGenLogMsg().Info().Msg("reconnecting").Send()
 	return c.connect()
 }
 
@@ -311,11 +331,15 @@ func (c *Conn) Reconnect() error {
 		}
 
 		allErrs = append(allErrs, err)
-		log.Debugln(c.Logf("reconnect [%d of %d] failed", i, c.Config.MaxReconnectionAttempts))
+		c.GenLogMsg().Debug().
+			WithMetaf("attempt", "%d/%d", i, c.Config.MaxReconnectionAttempts).
+			Msg("reconnect failed").Send()
 		time.Sleep(c.Config.ReconnectionDelay)
 	}
 
-	log.Debugln(c.Logf("reconnect failed after %d attempts", c.Config.MaxReconnectionAttempts))
+	c.GenLogMsg().Warn().
+		WithMetaf("attempts", "%d", c.Config.MaxReconnectionAttempts).
+		Msg("reconnect failed").Send()
 	return errors.Join(allErrs...)
 }
 
@@ -342,53 +366,58 @@ func (c *Conn) readLoop() {
 	c.ReadDone = make(chan struct{})
 	c.muConn.Unlock()
 
-	log.Debugln(c.Logf("starting read loop"))
+	c.GenLogMsg().Debug().Msg("starting read loop").Send()
 
 	for {
 		if c.state != ConnStateOpen {
-			log.Debugln(c.Logf("connection not open, exiting read loop"))
+			c.GenLogMsg().Debug().Msg("exiting read loop").Send()
 			return
 		}
 
 		headerBuf := make([]byte, 9)
 		if _, err := io.ReadFull(c.raw, headerBuf); err != nil {
 			if errors.Is(err, io.EOF) {
-				log.Infoln(c.Logf("connection closed by peer"))
+				c.GenLogMsg().Info().Msg("connection closed by peer").Send()
 				if err := c.Close(); err != nil {
-					log.Errorln(c.Logf("failed to close connection: %v", err))
+					c.GenLogMsg().Error().Msgf("failed to close connection: %v", err).Send()
 				}
 				return
 			}
 
-			log.Errorln(c.Logf("failed to read header: %v", err))
+			c.GenLogMsg().Error().Msgf("failed to read header: %v", err).Send()
 			continue
 		}
-		log.Debugln(c.Logf("recv header buf: %v", headerBuf))
 
 		header, err := UnmarshalHeader(headerBuf)
 		if err != nil {
-			log.Errorln(c.Logf("failed to unmarshal header: %v", err))
+			c.GenLogMsg().Error().
+				WithMetaf("header", "%#v", headerBuf).
+				Msgf("failed to unmarshal header: %v", err).Send()
 			continue
 		}
 
 		handler, ok := c.Config.Handlers[header.Action]
-		log.Debugln(c.Logf("handlers: %v", c.Config.Handlers))
 		if !ok {
-			log.Errorln(c.Logf("no handler for action %d", header.Action))
+			c.GenLogMsg().Info().Msgf("no handler for action %d", header.Action).Send()
 			continue
 		}
 
 		if header.Len > uint64(c.Config.MaxMessageSize) {
-			log.Errorln(c.Logf("payload too large, killing connection: %d > %d", header.Len, c.Config.MaxMessageSize))
+			c.GenLogMsg().Info().
+				WithMetaf("size", "%d>%d", header.Len, c.Config.MaxMessageSize).
+				Msg("payload too large, killing connection").Send()
+
 			if err := c.Close(); err != nil {
-				log.Errorln(c.Logf("failed to close connection: %v", errors.Join(ErrPayloadTooLarge, err)))
+				c.GenLogMsg().Error().
+					Msgf("failed to close connection: %v", errors.Join(ErrPayloadTooLarge, err)).
+					Send()
 			}
 			return
 		}
 
 		payload := make([]byte, header.Len)
 		if _, err := io.ReadFull(c.raw, payload); err != nil {
-			log.Errorln(c.Logf("failed to read payload: %v", err))
+			c.GenLogMsg().Error().Msgf("failed to read payload: %v", err).Send()
 			continue
 		}
 
@@ -398,18 +427,18 @@ func (c *Conn) readLoop() {
 
 func (c *Conn) heartbeatLoop() {
 	if c.Config.HeartbeatInterval == 0 {
-		log.Debugln(c.Logf("heartbeat loop not started"))
+		c.GenLogMsg().Debug().Msg("heartbeat interval is 0, skipping heartbeat loop").Send()
 		return
 	}
 
 	t := time.NewTicker(c.Config.HeartbeatInterval)
 	defer t.Stop()
-	log.Debugln(c.Logf("starting heartbeat loop"))
+	c.GenLogMsg().Debug().Msg("starting heartbeat loop").Send()
 
 	for range t.C {
 		c.muConn.Lock()
 		if c.state == ConnStateClosed {
-			log.Debugln(c.unsafeLogf("connection closed, exiting heartbeat loop"))
+			c.unsafeGenLogMsg().Debug().Msg("exiting heartbeat loop").Send()
 			c.muConn.Unlock()
 			return
 		}
@@ -425,7 +454,7 @@ func (c *Conn) heartbeatLoop() {
 		}
 
 		if err := c.sendPing(); err != nil {
-			log.Debugln(c.Logf("failed to send ping: %v", err))
+			c.GenLogMsg().Error().Msgf("failed to send ping: %v", err).Send()
 			go c.ReconnectOrClose()
 
 			return
@@ -437,7 +466,7 @@ func (c *Conn) heartbeatLoop() {
 			c.lastPing = time.Now().UTC()
 			c.muConn.Unlock()
 		case <-time.After(10 * time.Second):
-			log.Debugln(c.Logf("pong timeout"))
+			c.GenLogMsg().Warn().Msg("pong timeout").Send()
 			go c.ReconnectOrClose()
 
 			return
@@ -456,7 +485,7 @@ func (c *Conn) sendPing() error {
 	}
 
 	err = c.SafeWrite(b)
-	log.Debugln(c.Logf("sent ping"))
+	c.GenLogMsg().Debug().Msg("sent ping").Send()
 	return err
 }
 
@@ -468,6 +497,6 @@ func (c *Conn) sendPong() error {
 	}
 
 	err = c.SafeWrite(b)
-	log.Debugln(c.Logf("sent pong"))
+	c.GenLogMsg().Debug().Msg("sent pong").Send()
 	return err
 }

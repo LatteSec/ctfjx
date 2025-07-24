@@ -5,8 +5,6 @@ import (
 	"errors"
 	"io"
 	"time"
-
-	"github.com/lattesec/ctfjx/pkg/log"
 )
 
 var ErrAddressRequired = errors.New("address is required")
@@ -43,7 +41,7 @@ func (c *ConnConfig) Validate() error {
 var DefaultConnHandlers = map[Action]HandlerFunc{
 	ActionPing: func(c *Conn, header Header, r io.Reader) {
 		if err := c.sendPong(); err != nil {
-			log.Errorln(c.Logf("failed to send pong: %v", err))
+			c.GenLogMsg().Error().Msgf("failed to send pong: %v", err).Send()
 		}
 	},
 	ActionPong: func(c *Conn, header Header, r io.Reader) {

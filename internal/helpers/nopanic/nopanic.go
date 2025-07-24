@@ -1,9 +1,9 @@
 package nopanic
 
 import (
-	"fmt"
-	"os"
 	"time"
+
+	"github.com/lattesec/log"
 )
 
 func run[T any](name string, rerun bool, fn func() T) (out T) {
@@ -13,7 +13,7 @@ func run[T any](name string, rerun bool, fn func() T) (out T) {
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
-					fmt.Fprintf(os.Stderr, "panic in %s: %v\n", name, r)
+					log.Error().Msgf("panic in %s: %v", name, r).Send()
 					panicked = true
 				}
 			}()
