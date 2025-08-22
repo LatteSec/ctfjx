@@ -1,6 +1,6 @@
 module github.com/lattesec/ctfjx
 
-go 1.24.5
+go 1.24.6
 
 require (
 	github.com/lattesec/log v0.2.1
