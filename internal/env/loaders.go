@@ -19,6 +19,10 @@ func MustFn[T any](fn func(T) error, err error) func(T) error {
 	return fn
 }
 
+// FromYAML loads a config from a file with the given filename
+//
+// [pth] should be a filename or filepath to the config file.
+// The extension is optional and will be automatically added.
 func FromYAML[T Configurable](pth string) (func(T) error, error) {
 	pth = filepath.Clean(pth)
 	if pth == "." {
@@ -105,6 +109,20 @@ func FromYAML[T Configurable](pth string) (func(T) error, error) {
 	}, nil
 }
 
+// FromYAMLConfigs loads a config from a file with
+// the given filename in-order.
+//
+// The last loaded config takes precedence as they are
+// all merged together.
+//
+//  1. /etc/ctfjx/
+//  2. $XDG_CONFIG_HOME/ctfjx/ OR $HOME/.config/ctfjx/
+//  3. ./.ctfjx/
+//  4. $CTFJX_CONFIG_DIR/
+//
+// [filename] should be a filename or filepath relative to
+// any of the above locations. The extension is optional and
+// will be automatically added.
 func FromYAMLConfigs[T Configurable](filename string) (func(T) error, error) {
 	filename = filepath.Clean(filename)
 	if filename == "." {
