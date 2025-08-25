@@ -3,7 +3,7 @@ module github.com/lattesec/ctfjx
 go 1.24.6
 
 require (
-	github.com/lattesec/log v0.2.1
+	github.com/lattesec/log v0.2.2
 	github.com/stretchr/testify v1.10.0
 )
 
