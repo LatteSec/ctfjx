@@ -12,10 +12,7 @@ import (
 	"github.com/lattesec/log"
 )
 
-var (
-	ErrInvalidConfigFilename = errors.New("invalid config filename")
-	validConfigExtensions    = []string{".yaml", ".yml"}
-)
+var ErrInvalidConfigFilename = errors.New("invalid config filename")
 
 type Configurable interface {
 	Validate() error
