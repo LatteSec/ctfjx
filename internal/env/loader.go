@@ -2,15 +2,14 @@ package env
 
 import (
 	"errors"
-	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
+	"os/signal"
+	"sync/atomic"
+	"syscall"
 
-	"dario.cat/mergo"
 	"github.com/lattesec/ctfjx/internal/helpers/mirror"
+	"github.com/lattesec/ctfjx/internal/helpers/nopanic"
 	"github.com/lattesec/log"
-	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -18,101 +17,74 @@ var (
 	validConfigExtensions    = []string{".yaml", ".yml"}
 )
 
-type Loader struct {
-	paths []string
+type Configurable interface {
+	Validate() error
 }
 
-func NewLoader() *Loader {
-	paths := resolvePaths()
-
-	log.Debug().
-		WithMeta("scope", "env").
-		Msgf("using config paths: %s", strings.Join(paths, ", ")).Send()
-
-	return &Loader{paths}
+// Where T is a struct pointer
+type Loader[T Configurable] struct {
+	cfgValue  atomic.Value
+	callbacks []func(T) error
 }
 
-// Load merges config files into `out` (struct pointer)
-//
-// Usage:
-//
-//	l := NewLoader()
-//	l.Load("config.yaml", &config)
-func (l *Loader) Load(filename string, out any) error {
-	if err := mirror.IsStructPointer(out); err != nil {
-		return err
+func NewLoader[T Configurable]() *Loader[T] {
+	return &Loader[T]{}
+}
+
+func (l *Loader[T]) RegisterCallback(cb ...func(T) error) {
+	l.callbacks = append(l.callbacks, cb...)
+}
+
+func (l *Loader[T]) Current() T {
+	v := l.cfgValue.Load()
+	if v == nil {
+		var zero T
+		return zero
 	}
+	return v.(T)
+}
 
-	filename = filepath.Base(filename)
-	if filename == "." {
-		return ErrInvalidConfigFilename
-	}
+func (l *Loader[T]) Set(cfg T) {
+	l.cfgValue.Store(cfg)
+}
 
-	for _, dir := range l.paths {
-		for _, ext := range validConfigExtensions {
-			cfgPath := filepath.Join(dir, filename+ext)
-			log.Debug().
-				WithMeta("scope", "env").
-				WithMeta("path", cfgPath).
-				Msg("attempting to load config").Send()
+// AutoReload watches for SIGHUP
+func (l *Loader[T]) AutoReload() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGHUP)
 
-			data, err := os.ReadFile(cfgPath)
-			if err != nil {
-				if os.IsNotExist(err) {
-					log.Debug().
-						WithMeta("scope", "env").
-						WithMeta("path", cfgPath).
-						Msg("not found").Send()
-					continue
-				}
-
-				log.Error().
-					WithMeta("scope", "env").
-					WithMeta("path", cfgPath).
-					Msgf("failed to read config file: %v", err).Send()
-
-				return err
-			}
-
-			tmp := mirror.NewEmpty(out) // already a &struct{}
-			if err := yaml.Unmarshal(data, tmp); err != nil {
-				log.Warn().
-					WithMeta("scope", "env").
-					WithMeta("path", cfgPath).
-					Msgf("failed to parse: %v", err).Send()
-
-				log.Debug().
-					WithMeta("scope", "env").
-					WithMeta("path", cfgPath).
-					WithMeta("data", string(data)).
-					Msgf("failed to parse: %v", err).Send()
-
-				return fmt.Errorf("failed to parse config from %s: %v", cfgPath, err)
-			}
-
-			if err := mergo.Merge(out, tmp, mergo.WithOverride); err != nil {
-				log.Warn().
-					WithMeta("scope", "env").
-					WithMeta("path", cfgPath).
-					Msgf("failed to merge config: %v", err).Send()
-
-				log.Debug().
-					WithMeta("scope", "env").
-					WithMeta("path", cfgPath).
-					WithMeta("data", string(data)).
-					WithMeta("merge_with", out).
-					Msgf("failed to merge config: %v", err).Send()
-
-				return fmt.Errorf("failed to merge config from %s: %v", cfgPath, err)
-			}
-
+	go func() {
+		for range ch {
 			log.Info().
 				WithMeta("scope", "env").
-				WithMeta("path", cfgPath).
-				Msgf("loaded config from %s", cfgPath).Send()
+				Msg("received SIGHUP, reloading config").Send()
+
+			err := nopanic.NoPanicRun("env-nohup-reload", func() error {
+				return l.Load()
+			})
+			if err != nil {
+				log.Error().
+					WithMeta("scope", "env").
+					Msgf("failed to reload config: %v", err).Send()
+			}
+		}
+	}()
+}
+
+func (l *Loader[T]) Load() error {
+	cfg := mirror.Fresh[T]().(T) // *Cfg
+	log.Debug().Msgf("%#v", cfg).Send()
+	for _, cb := range l.callbacks {
+		if err := cb(cfg); err != nil {
+			return err
 		}
 	}
 
-	log.Debug().WithMeta("scope", "env").Msgf("config loaded: %#v", out).Send()
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+
+	l.Set(cfg)
+	log.Debug().WithMeta("scope", "env").Msgf("config loaded: %#v", cfg).Send()
 	return nil
 }
