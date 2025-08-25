@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/lattesec/log"
@@ -21,9 +22,17 @@ const (
 // $CTFJX_CONFIG_DIR/
 // ./.ctfjx/
 // $XDG_CONFIG_HOME/ctfjx/ OR $HOME/.config/ctfjx/
-// /etc/ctfjx/
+// /etc/ctfjx/ OR %APPDATA%/ctfjx/
 func resolvePaths() []string {
-	paths := []string{filepath.Join("/etc/", CTFJX_CONFIG_DIR_NAME)}
+	var paths []string
+
+	if runtime.GOOS == "windows" {
+		if appData := os.Getenv("APPDATA"); appData != "" {
+			paths = append(paths, filepath.Join(appData, CTFJX_CONFIG_DIR_NAME))
+		}
+	} else {
+		paths = append(paths, "/etc/"+CTFJX_CONFIG_DIR_NAME)
+	}
 
 	if cfgDir, err := os.UserConfigDir(); err == nil {
 		paths = append(paths, filepath.Join(cfgDir, CTFJX_CONFIG_DIR_NAME))

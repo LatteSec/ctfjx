@@ -50,7 +50,7 @@ func FromYAML[T Configurable](pth string) (func(T) error, error) {
 				WithMeta("path", cfgPath).
 				Msg("attempting to load config").Send()
 
-			data, err := os.ReadFile(cfgPath)
+			data, err := os.ReadFile(filepath.Clean(cfgPath))
 			if err != nil {
 				if os.IsNotExist(err) {
 					log.Debug().
@@ -115,7 +115,7 @@ func FromYAML[T Configurable](pth string) (func(T) error, error) {
 // The last loaded config takes precedence as they are
 // all merged together.
 //
-//  1. /etc/ctfjx/
+//  1. /etc/ctfjx/ OR %APPDATA%/ctfjx/
 //  2. $XDG_CONFIG_HOME/ctfjx/ OR $HOME/.config/ctfjx/
 //  3. ./.ctfjx/
 //  4. $CTFJX_CONFIG_DIR/
