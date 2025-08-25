@@ -3,6 +3,9 @@ package env
 import (
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/lattesec/log"
 )
 
 const (
@@ -33,6 +36,10 @@ func resolvePaths() []string {
 	if p := os.Getenv(CTFJX_CONFIG_DIR_ENV); p != "" {
 		paths = append(paths, p)
 	}
+
+	log.Debug().
+		WithMeta("scope", "env").
+		Msgf("using config paths: %s", strings.Join(paths, ", ")).Send()
 
 	return paths
 }
