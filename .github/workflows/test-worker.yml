@@ -42,7 +42,10 @@ jobs:
 
             test-source:
               - *common
-              - cmd/**
+              - ctfjx/**
+              - ctfjx-agent/**
+              - ctfjx-web/**
+              - ctfjxd/**
               - version/**
               - internal/**
               - pkg/**

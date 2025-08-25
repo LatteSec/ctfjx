@@ -68,19 +68,19 @@ build: build/$(CTFX) build/$(CTFXD) build/$(WEB) build/$(AGENT)
 
 .PHONY: build/$(CTFX)
 build/$(CTFX):
-	go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(CTFX)$(EXT) ./cmd/v1/ctfjx
+	go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(CTFX)$(EXT) ./ctfjx
 
 .PHONY: build/$(CTFXD)
 build/$(CTFXD):
-	 go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(CTFXD)$(EXT) ./cmd/v1/ctfjxd
+	 go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(CTFXD)$(EXT) ./ctfjxd
 
 .PHONY: build/$(WEB)
 build/$(WEB):
-	go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(WEB)$(EXT) ./cmd/v1/ctfjx-web
+	go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(WEB)$(EXT) ./ctfjx-web
 
 .PHONY: build/$(AGENT)
 build/$(AGENT):
-	go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(AGENT)$(EXT) ./cmd/v1/ctfjx-agent
+	go build $(BUILD_FLAGS) -o $(BIN_DIR)/$(AGENT)$(EXT) ./ctfjx-agent
 
 ## build/docs: Builds documentation
 build/docs:
