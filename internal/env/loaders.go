@@ -43,7 +43,7 @@ func FromYAML[T Configurable](pth string) (func(T) error, error) {
 
 	return func(cfg T) error {
 		for _, ext := range [2]string{".yml", ".yaml"} {
-			cfgPath := filepath.Join(pth + ext)
+			cfgPath := filepath.Clean(pth + ext)
 
 			log.Debug().
 				WithMeta("scope", "env").
