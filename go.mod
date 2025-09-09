@@ -5,7 +5,7 @@ go 1.24.6
 require (
 	dario.cat/mergo v1.0.2
 	github.com/goccy/go-yaml v1.18.0
-	github.com/lattesec/log v0.2.2
+	github.com/lattesec/log v0.2.3
 	github.com/stretchr/testify v1.11.1
 )
 
