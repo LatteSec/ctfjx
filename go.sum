@@ -4,8 +4,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/goccy/go-yaml v1.18.0 h1:8W7wMFS12Pcas7KU+VVkaiCng+kG8QiFeFwzFb+rwuw=
 github.com/goccy/go-yaml v1.18.0/go.mod h1:XBurs7gK8ATbW4ZPGKgcbrY1Br56PdM69F7LkFRi1kA=
-github.com/lattesec/log v0.2.2 h1:yiyaqYQktPtIjsjmPMrVEWLnvFRXUIfC90sgtJHromo=
-github.com/lattesec/log v0.2.2/go.mod h1:DEokMn596bt0DpNTr58qquLIh/BaAQZCl0NntPDR46g=
+github.com/lattesec/log v0.2.3 h1:AIOj0mheW31gPsrU7ZoVNZpeSNh5huwtK3vE3Zywdg8=
+github.com/lattesec/log v0.2.3/go.mod h1:DEokMn596bt0DpNTr58qquLIh/BaAQZCl0NntPDR46g=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
